@@ -161,6 +161,18 @@ func (m *SqliteStore) Save(r *http.Request, w http.ResponseWriter, session *sess
 	return nil
 }
 
+func filterValues(values map[interface{}]interface{}) map[interface{}]interface{} {
+	var filteredValues = make(map[interface{}]interface{})
+	for k, v := range values {
+		filteredValues[k] = v
+	}
+
+	delete(filteredValues, "created_on")
+	delete(filteredValues, "expires_on")
+	delete(filteredValues, "modified_on")
+	return filteredValues
+}
+
 func (m *SqliteStore) insert(session *sessions.Session) error {
 	var createdOn time.Time
 	var modifiedOn time.Time
@@ -178,11 +190,7 @@ func (m *SqliteStore) insert(session *sessions.Session) error {
 	} else {
 		expiresOn = exOn.(time.Time)
 	}
-	delete(session.Values, "created_on")
-	delete(session.Values, "expires_on")
-	delete(session.Values, "modified_on")
-
-	encoded, encErr := securecookie.EncodeMulti(session.Name(), session.Values, m.Codecs...)
+	encoded, encErr := securecookie.EncodeMulti(session.Name(), filterValues(session.Values), m.Codecs...)
 	if encErr != nil {
 		return encErr
 	}
@@ -240,10 +248,7 @@ func (m *SqliteStore) save(session *sessions.Session) error {
 		}
 	}
 
-	delete(session.Values, "created_on")
-	delete(session.Values, "expires_on")
-	delete(session.Values, "modified_on")
-	encoded, encErr := securecookie.EncodeMulti(session.Name(), session.Values, m.Codecs...)
+	encoded, encErr := securecookie.EncodeMulti(session.Name(), filterValues(session.Values), m.Codecs...)
 	if encErr != nil {
 		return encErr
 	}
