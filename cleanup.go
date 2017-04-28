@@ -1,25 +1,11 @@
 package sqlitestore
 
 import (
-	"database/sql"
 	"log"
 	"time"
 )
 
 var defaultInterval = time.Minute * 5
-
-// SqliteStoreCleanup - Session Store Cleanup helper
-type SqliteStoreCleanup struct {
-	DbPool *sql.DB,
-	TableName string
-}
-
-func NewSqliteStoreCleanup(db *sql.DB, tableName string) (*SessionStoreCleanup, error) {
-	return &SqliteStoreCleanup{
-		DbPool: db,
-		TableName: tableName
-	}, nil
-}
 
 // Cleanup runs a background goroutine every interval that deletes expired
 // sessions from the database.
@@ -31,7 +17,7 @@ func (m *SqliteStore) Cleanup(interval time.Duration) (chan<- struct{}, <-chan s
 	}
 
 	quit, done := make(chan struct{}), make(chan struct{})
-	go db.cleanup(interval, quit, done)
+	go m.cleanup(interval, quit, done)
 	return quit, done
 }
 
@@ -57,7 +43,7 @@ func (m *SqliteStore) cleanup(interval time.Duration, quit <-chan struct{}, done
 			return
 		case <-ticker.C:
 			// Delete expired sessions on each tick.
-			err := db.deleteExpired()
+			err := m.deleteExpired()
 			if err != nil {
 				log.Printf("pgstore: unable to delete expired sessions: %v", err)
 			}
@@ -66,8 +52,8 @@ func (m *SqliteStore) cleanup(interval time.Duration, quit <-chan struct{}, done
 }
 
 // deleteExpired deletes expired sessions from the database.
-func (m *SqliteStore)  deleteExpired() error {
-	var deleteStmt = "DELETE FROM " + m.TableName + " WHERE expires_on < datetime('now')"
-	_, err := db.DbPool.Exec(deleteStmt)
+func (m *SqliteStore) deleteExpired() error {
+	var deleteStmt = "DELETE FROM " + m.table + " WHERE expires_on < datetime('now')"
+	_, err := m.db.Exec(deleteStmt)
 	return err
 }
