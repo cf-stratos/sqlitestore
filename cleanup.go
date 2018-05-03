@@ -53,7 +53,7 @@ func (m *SqliteStore) cleanup(interval time.Duration, quit <-chan struct{}, done
 
 // deleteExpired deletes expired sessions from the database.
 func (m *SqliteStore) deleteExpired() error {
-	var deleteStmt = "DELETE FROM " + m.table + " WHERE expires_on < datetime('now')"
+	var deleteStmt = "DELETE FROM " + m.table + " WHERE expires_on < datetime(CURRENT_TIMESTAMP,'localtime')"
 	_, err := m.db.Exec(deleteStmt)
 	return err
 }
