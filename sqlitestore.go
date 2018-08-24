@@ -125,8 +125,11 @@ func (m *SqliteStore) Get(r *http.Request, name string) (*sessions.Session, erro
 func (m *SqliteStore) New(r *http.Request, name string) (*sessions.Session, error) {
 	session := sessions.NewSession(m, name)
 	session.Options = &sessions.Options{
-		Path:   m.Options.Path,
-		MaxAge: m.Options.MaxAge,
+		Domain:   m.Options.Domain,
+		HttpOnly: m.Options.HttpOnly,
+		MaxAge:   m.Options.MaxAge,
+		Path:     m.Options.Path,
+		Secure:   m.Options.Secure,
 	}
 	session.IsNew = true
 	var err error
